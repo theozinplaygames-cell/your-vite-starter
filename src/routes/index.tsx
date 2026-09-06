@@ -86,8 +86,6 @@ function Game() {
 
   const hintList = target
     ? [
-        { label: "Continente", value: target.region },
-        { label: "Região", value: target.subregion },
         {
           label: "Idioma",
           value: target.languages.length ? target.languages.join(", ") : "Sem idioma oficial",
@@ -101,8 +99,6 @@ function Game() {
       : target && hints >= 1
         ? idsInRegion(target.region)
         : [];
-  const outlineLabel =
-    target && hints >= 2 ? target.subregion : target && hints >= 1 ? target.region : undefined;
 
 
   const finished = result !== null;
@@ -142,8 +138,6 @@ function Game() {
             correctId={finished ? (target?.id ?? null) : null}
             wrongId={result && !result.ok ? result.guessId : null}
             highlightIds={outlineIds}
-            outlineIds={outlineIds}
-            {...(outlineLabel ? { outlineLabel } : {})}
 
             resetKey={round}
           />
