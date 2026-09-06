@@ -36,10 +36,10 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/duelo", replace: true });
+      if (data.session) navigate({ to: "/", replace: true });
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") navigate({ to: "/duelo", replace: true });
+      if (event === "SIGNED_IN") navigate({ to: "/", replace: true });
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
