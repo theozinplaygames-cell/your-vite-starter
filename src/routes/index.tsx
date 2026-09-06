@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { WorldMap } from "@/components/WorldMap";
+import { supabase } from "@/integrations/supabase/client";
 import {
   countryById,
   idsInRegion,
@@ -49,6 +50,15 @@ function Game() {
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(1);
   const [streak, setStreak] = useState(0);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setSignedIn(Boolean(session));
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     setTarget(pick());
