@@ -120,10 +120,10 @@ function Game() {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            to="/duelo"
+            to={signedIn ? "/duelo" : "/auth"}
             className="font-display rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
-            Duelo 1x1
+            {signedIn ? "Duelo 1x1" : "Entrar para duelar"}
           </Link>
           <Stat label="Pontos" value={score} />
           <Stat label="Rodada" value={round} />
