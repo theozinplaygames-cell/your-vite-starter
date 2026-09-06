@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { WorldMap } from "@/components/WorldMap";
 import {
@@ -108,7 +108,13 @@ function Game() {
             Onde fica esse país?
           </h1>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/duelo"
+            className="font-display rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Duelo 1x1
+          </Link>
           <Stat label="Pontos" value={score} />
           <Stat label="Rodada" value={round} />
           <Stat label="Sequência" value={streak} />
