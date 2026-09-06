@@ -297,7 +297,7 @@ function DuelPage() {
   );
 }
 
-function Dot({ ok, shown }: { ok?: boolean; shown: boolean }) {
+function Dot({ ok, shown }: { ok?: boolean | undefined; shown: boolean }) {
   return (
     <span
       className={`inline-block h-3 w-3 rounded-full ${
