@@ -270,6 +270,33 @@ body {
   backdrop-filter: blur(8px);
 }
 
+.input-field {
+  width: 100%;
+  background: color-mix(in oklab, var(--background) 70%, var(--card));
+  border: 2px solid color-mix(in oklab, var(--border) 100%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.input-field::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 85%, transparent);
+}
+
+.input-field:hover {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  background: var(--card);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 22%, transparent);
+}
+
+
 #lovable-badge,
 [lovable-badge] {
   display: none !important;
