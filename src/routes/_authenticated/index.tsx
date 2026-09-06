@@ -10,7 +10,7 @@ import {
   type CountryMeta,
 } from "@/lib/geo";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Atlas Quiz — Adivinhe onde fica cada país no mapa" },
