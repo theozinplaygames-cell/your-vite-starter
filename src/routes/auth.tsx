@@ -30,6 +30,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [code, setCode] = useState("");
+  const [awaitingCode, setAwaitingCode] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -55,20 +57,59 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/duelo",
+            emailRedirectTo: window.location.origin + "/auth",
             data: { username: username.trim() || email.split("@")[0] },
           },
         });
         if (err) throw err;
-        if (data.session) navigate({ to: "/duelo", replace: true });
-        else setMessage("Confira seu e-mail para confirmar a conta e depois entre.");
+        if (data.session) {
+          navigate({ to: "/", replace: true });
+        } else {
+          setAwaitingCode(true);
+          setMessage("Enviamos um código de 6 dígitos para o seu e-mail.");
+        }
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
-        navigate({ to: "/duelo", replace: true });
+        navigate({ to: "/", replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível continuar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+    setBusy(true);
+    try {
+      const { error: err } = await supabase.auth.verifyOtp({
+        email,
+        token: code.trim(),
+        type: "email",
+      });
+      if (err) throw err;
+      navigate({ to: "/", replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Código inválido ou expirado.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    setError(null);
+    setMessage(null);
+    setBusy(true);
+    try {
+      const { error: err } = await supabase.auth.resend({ type: "signup", email });
+      if (err) throw err;
+      setMessage("Enviamos um novo código para o seu e-mail.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível reenviar o código.");
     } finally {
       setBusy(false);
     }
@@ -83,8 +124,67 @@ function AuthPage() {
       setError("Não foi possível entrar com o Google.");
       return;
     }
-    // O listener acima navega para /duelo quando a sessão estiver pronta.
+    // O listener acima navega quando a sessão estiver pronta.
   };
+
+  if (awaitingCode) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-5 px-4 py-10">
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              setAwaitingCode(false);
+              setCode("");
+              setError(null);
+              setMessage(null);
+            }}
+            className="text-xs uppercase tracking-[0.35em] text-accent"
+          >
+            ← Voltar
+          </button>
+          <h1 className="font-display mt-2 text-3xl font-bold">Confirme seu e-mail</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Digite o código de 6 dígitos enviado para <strong>{email}</strong>.
+          </p>
+        </div>
+
+        <form onSubmit={verify} className="panel flex flex-col gap-4 p-6">
+          <Field label="Código de verificação">
+            <input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000000"
+              className="input-field text-center text-2xl font-semibold tracking-[0.6em]"
+            />
+          </Field>
+
+          {error && <p className="text-sm font-medium text-wrong">{error}</p>}
+          {message && <p className="text-sm font-medium text-correct">{message}</p>}
+
+          <button
+            type="submit"
+            disabled={busy || code.length < 6}
+            className="font-display w-full rounded-xl bg-primary px-4 py-3.5 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {busy ? "Verificando..." : "Confirmar código"}
+          </button>
+
+          <button
+            type="button"
+            onClick={resend}
+            disabled={busy}
+            className="text-sm text-accent underline-offset-4 hover:underline disabled:opacity-50"
+          >
+            Reenviar código
+          </button>
+        </form>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-5 px-4 py-10">
@@ -100,7 +200,7 @@ function AuthPage() {
         </p>
       </div>
 
-      <form onSubmit={submit} className="panel flex flex-col gap-3 p-5">
+      <form onSubmit={submit} className="panel flex flex-col gap-4 p-6">
         {mode === "signup" && (
           <Field label="Apelido">
             <input
@@ -116,6 +216,8 @@ function AuthPage() {
           <input
             type="email"
             required
+            autoComplete="email"
+            placeholder="voce@exemplo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input-field"
@@ -126,19 +228,21 @@ function AuthPage() {
             type="password"
             required
             minLength={6}
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            placeholder="Mínimo de 6 caracteres"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input-field"
           />
         </Field>
 
-        {error && <p className="text-sm text-wrong">{error}</p>}
-        {message && <p className="text-sm text-correct">{message}</p>}
+        {error && <p className="text-sm font-medium text-wrong">{error}</p>}
+        {message && <p className="text-sm font-medium text-correct">{message}</p>}
 
         <button
           type="submit"
           disabled={busy}
-          className="font-display mt-1 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="font-display w-full rounded-xl bg-primary px-4 py-3.5 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "Aguarde..." : mode === "signin" ? "Entrar" : "Criar conta"}
         </button>
@@ -146,7 +250,7 @@ function AuthPage() {
         <button
           type="button"
           onClick={google}
-          className="w-full rounded-xl border border-border px-4 py-3 text-sm font-semibold transition-colors hover:bg-accent/10"
+          className="w-full rounded-xl border-2 border-border px-4 py-3 text-sm font-semibold transition-colors hover:bg-accent/10"
         >
           Continuar com o Google
         </button>
@@ -169,9 +273,12 @@ function AuthPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <span className="text-xs font-semibold uppercase tracking-widest text-foreground/80">
+        {label}
+      </span>
       {children}
     </label>
   );
 }
+
