@@ -38,6 +38,10 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/duelo", replace: true });
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") navigate({ to: "/duelo", replace: true });
+    });
+    return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -73,14 +77,13 @@ function AuthPage() {
   const google = async () => {
     setError(null);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/duelo",
+      redirect_uri: window.location.origin + "/auth",
     });
     if (result.error) {
       setError("Não foi possível entrar com o Google.");
       return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/duelo", replace: true });
+    // O listener acima navega para /duelo quando a sessão estiver pronta.
   };
 
   return (
